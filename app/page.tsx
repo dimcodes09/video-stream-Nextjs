@@ -1,65 +1,159 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
+
+interface Video {
+  _id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  thumbnailUrl: string;
+}
+
+export default function HomePage() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      const res = await fetch("/api/video");
+      const data = await res.json();
+      setVideos(data);
+    };
+
+    fetchVideos();
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#0f0f0f",
+        color: "white",
+      }}
+    >
+      {/* 🔥 HEADER */}
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          background: "#0f0f0f",
+          padding: "15px 30px",
+          borderBottom: "1px solid #222",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          zIndex: 10,
+        }}
+      >
+        <h1 style={{ fontSize: "20px" }}>StreamX</h1>
+
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          {session ? (
+            <>
+              <Link
+                href="/upload"
+                style={{
+                  padding: "8px 14px",
+                  background: "#22c55e",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                }}
+              >
+                Upload
+              </Link>
+
+              <button
+                onClick={() => signOut()}
+                style={{
+                  padding: "8px 14px",
+                  background: "#ef4444",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login">Login</Link>
+              <Link href="/register">Register</Link>
+            </>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </div>
+
+      {/* 🔥 GRID */}
+      <div
+        style={{
+          padding: "30px",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: "20px",
+        }}
+      >
+        {videos.map((video) => (
+          <div
+            key={video._id}
+            onClick={() => router.push(`/video/${video._id}`)}
+            style={{
+              cursor: "pointer",
+              borderRadius: "12px",
+              overflow: "hidden",
+              background: "#181818",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.transform = "scale(1.03)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.transform = "scale(1)")
+            }
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            {/* THUMBNAIL */}
+            <div style={{ position: "relative" }}>
+              <img
+                src={video.thumbnailUrl}
+                style={{
+                  width: "100%",
+                  height: "180px",
+                  objectFit: "cover",
+                }}
+              />
+
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "8px",
+                  right: "8px",
+                  background: "rgba(0,0,0,0.7)",
+                  padding: "3px 6px",
+                  borderRadius: "4px",
+                  fontSize: "12px",
+                }}
+              >
+                ▶
+              </div>
+            </div>
+
+            {/* INFO */}
+            <div style={{ padding: "10px" }}>
+              <h3 style={{ fontSize: "14px", marginBottom: "4px" }}>
+                {video.title}
+              </h3>
+              <p style={{ fontSize: "12px", color: "#aaa" }}>
+                {video.description}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
